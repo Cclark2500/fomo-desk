@@ -41,8 +41,8 @@ async function tick(){
     $('whales').innerHTML=L.length?`<table><tr><th>Whale</th><th>7d PnL</th><th>Win</th></tr>${L.map(x=>`<tr><td>${a_(x.profile_url,esc(x.handle))}</td><td>${usd(x.pnl_7d)}</td><td>${pct(x.win_rate)}</td></tr>`).join('')}</table>`:'<div class="empty">No whales qualify right now.</div>';
   }catch(e){$('whales').innerHTML='<div class="empty">Waiting for first data…</div>';}
   try{
-    const a=await get('activity.json'), E=a.events||[];
-    $('activity').innerHTML=E.length?E.slice(0,30).map(x=>`<li>${esc(new Date(x.t).toLocaleTimeString())} · ${a_(x.url,esc(x.text))}</li>`).join(''):'<li class="mut">No activity yet (paper mode).</li>';
+    const a=await get('activity.json'), E=a.rows||[];
+    $('activity').innerHTML=E.length?E.slice(0,30).map(x=>`<li>${esc(new Date(x.ts).toLocaleTimeString())} · ${a_(x.link,esc(x.title+(x.subtitle?' — '+x.subtitle:'')))}</li>`).join(''):'<li class="mut">Nothing yet tonight</li>';
   }catch(e){$('activity').innerHTML='<li class="mut">Waiting for first data…</li>';}
 }
 tick(); setInterval(tick,POLL_MS);
