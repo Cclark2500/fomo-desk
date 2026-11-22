@@ -98,7 +98,7 @@ async function poll(){
   if(!PLAN) return render(true);
   try{const st=await get('state');net.fail=0;net.offline=false;net.lastOk=st.updated_utc;stateOk=true;}catch(e){net.fail++;net.offline=(e instanceof TypeError)&&PLAN==='B';}   // plan B: Pages is always up, so a network error = this phone is offline
   net.next=Date.now()+(net.fail?Math.min(60000,POLL_MS*2**(net.fail-1)):POLL_MS);
-  tryGet('pushes').then(bell);
+  tryGet('pushes').then(bell); if(!LAST.account) tryGet('account').then(()=>{if(route().p==='home')navHome();});
   errRow(); await render(true);
 }
 let timer=null;
