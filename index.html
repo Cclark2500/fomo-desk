@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Copy Desk">
+<meta name="theme-color" content="#0b0f14">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="app.css">
+<title>Copy Desk</title>
+</head><body>
+<header><h1>Copy Desk</h1><span id="mode" class="pill">—</span></header>
+<main>
+  <section class="card"><h2>Status</h2><div id="status">loading…</div><div id="updated" class="mut"></div></section>
+  <section class="card"><h2>Balance</h2><div id="balance" class="big">—</div><canvas id="chart" width="600" height="220"></canvas></section>
+  <section class="card"><h2>Whales</h2><div id="whales" class="mut">—</div></section>
+  <section class="card"><h2>Activity</h2><ul id="activity"></ul></section>
+  <section class="card"><h2>Heartbeats</h2><ul id="beats"></ul></section>
+  <p class="note">Pause and settings go through Telegram (coming soon). This page is read-only.</p>
+</main>
+<script src="chart.js"></script>
+<script src="app.js"></script>
+</body></html>
