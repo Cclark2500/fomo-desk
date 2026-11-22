@@ -39,6 +39,7 @@ async function get(n){
 async function tryGet(n){try{return await get(n);}catch(e){return LAST[n]??null;}}
 // ---------- format ----------
 const usd=(v,d=2)=>v==null||isNaN(v)?'—':(v<0?'-':'')+'$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const cmp=v=>v==null?'—':(v>=0?'+':'-')+'$'+new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(Math.abs(v));
 const sgn=v=>v==null?'—':(v>=0?'+':'-')+'$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pctS=v=>v==null?'—':(v>=0?'+':'')+Number(v).toFixed(2)+'%';
 const hm=iso=>{if(!iso)return'—';const d=new Date(iso);return isNaN(d)?esc(iso):d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});};
@@ -116,7 +117,7 @@ function homeShell(){
   $('#view').innerHTML=`
   <div class="bal"><span class="odo" id="odo" role="text" aria-label="Balance"></span><span id="modePill"></span></div>
   <div class="today"><span id="today"></span><span class="pill mult" id="mult" hidden></span></div>
-  <div class="chartbox"><canvas id="bc" role="img" aria-label="Balance chart"></canvas><p class="sr" id="bcSum"></p></div>
+  <div class="chartbox"><canvas id="bc" role="img" aria-label="Balance chart"></canvas><p class="sr" id="bcSum"></p><p class="note" id="bcNote" style="position:absolute;left:16px;right:16px;bottom:8px;text-align:center" hidden>The line starts with the first copy</p></div>
   <div class="ranges" role="group" aria-label="Chart range">${['LIVE','1H','4H','1D','1W','ALL'].map(r=>`<button data-r="${r}" aria-pressed="${r===range}">${r}</button>`).join('')}</div>
   <button class="live" id="live" aria-label="Live screen of the bot's computer. Tap for full screen">
     <img id="fa" alt="" hidden><img id="fb" alt="" hidden><div class="nofr" id="nofr">Waiting for the first frame</div>
@@ -131,7 +132,7 @@ function homeSkeleton(){$('#view').innerHTML=`${sk(72,8)}${sk(20)}${sk(220,12)}$
 async function drawChart(){
   const c=await tryGet('chart/'+range); const st=LAST.state; if(!c||!$('#bc')) return;
   const marks=(c.marks||[]).filter(m=>m.text).map(m=>({t:m.t,text:m.text,kind:m.kind}));
-  drawBalance($('#bc'),c.points||[],c.start_cash,marks,chartN); chartN=(c.points||[]).length;
+  drawBalance($('#bc'),c.points||[],c.start_cash,marks,chartN); chartN=(c.points||[]).length; $('#bcNote').hidden=chartN>1;
   const s=st&&st.balance_usd!=null?`Balance ${usd(st.balance_usd)}, ${st.today_pct>=0?'up':'down'} ${Math.abs(st.today_pct||0).toFixed(1)}% tonight`:'Balance unknown';
   $('#bc').setAttribute('aria-label',s); $('#bcSum').textContent=s;
 }
@@ -183,7 +184,7 @@ let front='fa';
 function loadFrame(){   // double buffered: load into the hidden <img>, swap only after it decoded -> never flashes
   const back=front==='fa'?'fb':'fa'; const b=$('#'+back); if(!b) {clearInterval(screenT);screenT=null;return;}
   const im=new Image(); im.onload=()=>{b.src=im.src; b.hidden=false; const f=$('#'+front); if(f) f.hidden=true; front=back; $('#nofr').hidden=true; $('#live').dataset.src=im.src;};
-  im.onerror=()=>{ if($('#fa').hidden&&$('#fb').hidden){$('#nofr').hidden=false;$('#nofr').textContent=LAST.state?.lane?.status?.includes('private')?'Paused · private':'No frame published yet';}};
+  im.onerror=()=>{ if($('#fa').hidden&&$('#fb').hidden){$('#nofr').hidden=false;$('#nofr').textContent=(!navigator.onLine||net.offline)?'Offline · the frame needs the network':LAST.state?.lane?.status?.includes('private')?'Paused · private':'No frame published yet';}};
   im.src=url('screen.jpg')+'?t='+Date.now();
 }
 function openFull(){
@@ -231,7 +232,7 @@ async function openOrder(id){
   const cr=o.checks_read||{}; const kv=(k,v)=>`<div class="kv"><span class="k">${esc(k)}</span><span class="v">${v}</span></div>`;
   const steps=(o.steps_ms||[]).map(s=>`${esc(s.step)} ${s.ms} ms${s.ok?'':' ✕'}`).join(' · ')||'—';
   const read=k=>cr[k]!=null?esc(typeof cr[k]==='string'?cr[k]:JSON.stringify(cr[k])):(o.checks?.[k]==null?'not run (no click in '+esc(o.mode||'PAPER')+')':'—');
-  sheet(kv('Side',o.side==='buy'?'Buy':'Sell')+kv('Coin',esc(o.symbol||o.mint))+kv('$ asked',usd(o.usd))+kv('Status',`${esc(o.status)}${o.error?' · '+esc(o.error):''}`)+kv('Quote',esc(o.quote_text||'—'))+kv('Fee',esc(o.fee_text||'—'))+kv('Price impact',esc(o.impact_text||'—'))
+  sheet(kv('Side',o.side==='buy'?'Buy':'Sell')+kv('Coin',`${esc(o.symbol||'')} <span class="sec">${esc((o.mint||'').slice(0,6))}…${esc((o.mint||'').slice(-6))}</span>`)+kv('$ asked',usd(o.usd))+kv('Status',`${esc(o.status)}${o.error?' · '+esc(o.error):''}`)+kv('Quote',esc(o.quote_text||'—'))+kv('Fee',esc(o.fee_text||'—'))+kv('Price impact',esc(o.impact_text||'—'))
     +kv(`Screen ${ckTxt(o.checks?.screen)}`,read('screen'))+kv(`API ${ckTxt(o.checks?.api)}`,read('api'))+kv(`Chain ${ckTxt(o.checks?.chain)}`,read('chain'))+kv('ms per step',steps)
     +(o.shot?`<img class="shot" src="${esc(url(o.shot))}" alt="Failure screenshot of order ${o.id}">`:'')
     +`<div class="btns" style="grid-template-columns:1fr">${safeUrl(o.link)?`<a class="btn pri" href="${esc(o.link)}" target="_blank" rel="noopener">Open on FOMO</a>`:''}</div>`,`Order ${o.id} · ${o.side==='buy'?'Buy':'Sell'} ${o.symbol||''}`);
@@ -242,7 +243,7 @@ VIEWS.whales=async(r,soft)=>{
   navTitle('Whales'); const w=await tryGet('whales');
   if(!w){if(!soft)$('#view').innerHTML=`<h1 class="big">Whales</h1>${sk(64)}${sk(64,2)}${sk(64,2)}`;return;}
   const L=w.whales||[];
-  $('#view').innerHTML=`<h1 class="big">Whales</h1>${L.length?`<div class="list">${L.map(x=>`<div class="li"><span class="sec" style="width:20px">${x.rank??''}</span>${mono(x.handle)}<a class="m" href="#/whale/${encodeURIComponent(x.id)}" aria-label="@${esc(x.handle)}, rank ${x.rank}, details"><div class="t">@${esc(x.handle)}</div><div class="s">${x.last_fill?`${esc(x.last_fill.side==='buy'?'bought':'sold')} ${esc(x.last_fill.symbol||'')} · ${ago(x.last_fill.ts)}`:'no fill seen'}</div></a><span class="v"><span class="${x.pnl_7d>=0?'green':'red'}">${sgn(x.pnl_7d).replace('.00','')}</span><small>${x.win_rate!=null?(x.win_rate*100).toFixed(0)+'% win':''}</small></span>${sw(x.muted,`Mute @${x.handle}`)}</div>`).join('')}</div><p class="note">Mute: ${VIA}. Guard still watches a muted whale's exits on coins you hold.</p>`:`<div class="empty">List builds at night start</div>`}`;
+  $('#view').innerHTML=`<h1 class="big">Whales</h1>${L.length?`<div class="list">${L.map(x=>`<div class="li"><span class="sec" style="width:20px">${x.rank??''}</span>${mono(x.handle)}<a class="m" href="#/whale/${encodeURIComponent(x.id)}" aria-label="@${esc(x.handle)}, rank ${x.rank}, details"><div class="t">@${esc(x.handle)}</div><div class="s">${x.last_fill?`${esc(x.last_fill.side==='buy'?'bought':'sold')} ${esc(x.last_fill.symbol||(x.last_fill.mint||'').slice(0,6))} · ${ago(x.last_fill.ts)}`:'no fill seen'}</div></a><span class="v"><span class="${x.pnl_7d>=0?'green':'red'}">${cmp(x.pnl_7d)}</span><small>${x.win_rate!=null?(x.win_rate*100).toFixed(0)+'% win':''}</small></span>${sw(x.muted,`Mute @${x.handle}`)}</div>`).join('')}</div><p class="note">Mute: ${VIA}. Guard still watches a muted whale's exits on coins you hold.</p>`:`<div class="empty">List builds at night start</div>`}`;
 };
 VIEWS.whale=async(r,soft)=>{
   const w=await tryGet('whale/'+r.a); navTitle(w?'@'+w.handle:'Whale',true);
