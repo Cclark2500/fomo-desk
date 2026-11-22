@@ -1,7 +1,7 @@
 // Service worker (spec STEP 10 OFFLINE): caches ONLY the shell (html, css, js, icons) so the app opens with no network.
 // It never caches /api or the published data under d/ (those always go to the network; the app keeps its own last
 // numbers and shows "Offline · last update {time}").
-const C='grokbot-shell-v12', SHELL=['./','index.html','app.css','app.js','chart.js','manifest.json','icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png'];
+const C='grokbot-shell-v13', SHELL=['./','index.html','app.css','app.js','chart.js','manifest.json','icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(SHELL)));});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{

@@ -175,9 +175,12 @@ function botCards(st,{wd,vd,sd,od,setg,au}){
 }
 function liveCard(st){
   const lane=st.lane||{}; const fr=lane.frame_utc; const fresh=fr&&(Date.now()-Date.parse(fr))<5000;
-  $('#ltl').innerHTML=fresh?'<span class="ldot on"></span>Live · Bot\'s computer':`<span class="ldot"></span>${fr?'Last frame '+hm(fr):(esc(lane.status||'No frame'))}`;
+  $('#ltl').innerHTML=PLAN!=='A'?`<span class="ldot"></span>${esc(lane.status==='live'?'Desk screen':lane.status||'Desk screen')}`:fresh?'<span class="ldot on"></span>Live · Bot\'s computer':`<span class="ldot"></span>${fr?'Last frame '+hm(fr):(esc(lane.status||'No frame'))}`;
   const h=lane.holder; const col=h?COLORS[(h.bot||'').toLowerCase()]:null;
   $('#ltr').innerHTML=h?`<span style="color:${col}">${esc(h.bot)} · ${esc(h.action)}</span>`:'Idle';
+  if(PLAN!=='A'){   // user decision 2026-11-22: no picture of the screen is ever published; it stays on the desk
+    $('#nofr').hidden=false; $('#nofr').innerHTML='<span><b style="color:#fff">Paused · private</b><br>Live picture: private, on the desk only</span>';
+    $('#live').setAttribute('aria-label',"Live screen: private, on the desk only. "+($('#ltr').textContent||'')); $('#live').dataset.src=''; return;}
   if(!screenT){loadFrame();screenT=setInterval(loadFrame,SCREEN_MS);}
 }
 let front='fa';
@@ -234,7 +237,7 @@ async function openOrder(id){
   const read=k=>cr[k]!=null?esc(typeof cr[k]==='string'?cr[k]:JSON.stringify(cr[k])):(o.checks?.[k]==null?'not run (no click in '+esc(o.mode||'PAPER')+')':'—');
   sheet(kv('Side',o.side==='buy'?'Buy':'Sell')+kv('Coin',`${esc(o.symbol||'')} <span class="sec">${esc((o.mint||'').slice(0,6))}…${esc((o.mint||'').slice(-6))}</span>`)+kv('$ asked',usd(o.usd))+kv('Status',`${esc(o.status)}${o.error?' · '+esc(o.error):''}`)+kv('Quote',esc(o.quote_text||'—'))+kv('Fee',esc(o.fee_text||'—'))+kv('Price impact',esc(o.impact_text||'—'))
     +kv(`Screen ${ckTxt(o.checks?.screen)}`,read('screen'))+kv(`API ${ckTxt(o.checks?.api)}`,read('api'))+kv(`Chain ${ckTxt(o.checks?.chain)}`,read('chain'))+kv('ms per step',steps)
-    +(o.shot?`<img class="shot" src="${esc(url(o.shot))}" alt="Failure screenshot of order ${o.id}">`:'')
+    +(o.status==='failed'?kv('Abort',`<span class="red">${esc(o.abort||'—')}</span> · ${esc((o.error||'').split(':').slice(1).join(':').trim()||o.error||'')}`)+kv('Failure screenshot',o.has_shot?'kept on the desk only (private)':'none'):'')
     +`<div class="btns" style="grid-template-columns:1fr">${safeUrl(o.link)?`<a class="btn pri" href="${esc(o.link)}" target="_blank" rel="noopener">Open on FOMO</a>`:''}</div>`,`Order ${o.id} · ${o.side==='buy'?'Buy':'Sell'} ${o.symbol||''}`);
 }
 window.openOrder=openOrder;
