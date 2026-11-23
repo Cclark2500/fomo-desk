@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Grok Bot">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="app.css">
+<title>Grok Bot · Copy Desk</title>
+</head><body>
+<header id="nav" class="nav">
+  <div class="nav-l" id="navL"></div>
+  <div class="nav-r">
+    <button class="icon" id="btnSearch" aria-label="Search coins and whales"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
+    <button class="icon" id="btnBell" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="dot" id="bellDot" hidden></span></button>
+  </div>
+</header>
+<div id="err" class="err" role="status" aria-live="polite" hidden></div>
+<main id="view" tabindex="-1"></main>
+<div id="ptr" class="ptr" aria-hidden="true">Release to refresh</div>
+<nav class="tabs" aria-label="Main">
+  <a href="#/home" data-tab="home" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Home</span></a>
+  <a href="#/whales" data-tab="whales" aria-label="Whales"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 13c3-5 9-6 14-3l4-3v8l-4-2c-5 3-11 2-14-0z"/><circle cx="8" cy="12" r="1"/></svg><span>Whales</span></a>
+  <a href="#/bots" data-tab="bots" aria-label="Bots"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M9 12h.01M15 12h.01M9 16h6"/></svg><span>Bots</span></a>
+  <a href="#/activity" data-tab="activity" aria-label="Activity"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg><span>Activity</span></a>
+  <a href="#/account" data-tab="account" aria-label="Account"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>Account</span></a>
+</nav>
+<div id="sheet" class="sheet-wrap" hidden><div class="scrim" data-close></div><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="grab" aria-hidden="true"></div><div id="sheetBody"></div></section></div>
+<div id="full" class="full" hidden role="dialog" aria-modal="true" aria-label="Live screen, full size"></div>
+<script src="chart.js"></script>
+<script src="app.js"></script>
+</body></html>
