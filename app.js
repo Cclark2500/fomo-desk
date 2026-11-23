@@ -1,12 +1,14 @@
 // Grok Bot Copy Desk · THE APP (spec STEP 10). Plain JS, no framework, no build step.
 // Plan B (GitHub Pages): data is published by the desk every 6 min under d/<DATA_PATH>/ (the path comes from the URL
 // fragment #d=..., never sent to a server, kept in localStorage). The app polls; no SSE. Controls that need a POST to
-// the box cannot work from Pages: they are shown disabled with "via Grok Bot chat / Telegram (STEP 11)". Never a made-up number.
+// the box cannot work from Pages: they are shown disabled with "via Telegram" + a t.me/<bot> deep link (STEP 11). Never a made-up number.
 'use strict';
 const KEY='copydesk.d', TKEY='copydesk.t', READ='copydesk.read', RECENT='copydesk.recent';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const VIA='via Grok Bot chat / Telegram (STEP 11)';
+const VIA='via Telegram';
+const tg=()=>(typeof LAST!=='undefined'&&LAST.state&&LAST.state.push&&LAST.state.push.telegram)||null;
+const viaH=()=>{const t=tg();return t&&t.deep_link?`<a class="blue" href="${esc(t.deep_link)}" target="_blank" rel="noopener">via Telegram</a>`:'via Telegram (not connected yet)';};
 const COLORS={watcher:'#64d2ff',vetter:'#ffd60a',sizer:'#bf5af2',executor:'#00d35a',guard:'#ff6b9a'};
 const NAMES={watcher:'Watcher',vetter:'Vetter',sizer:'Sizer',executor:'Executor',guard:'Guard'};
 function dataPath(){
@@ -246,7 +248,7 @@ VIEWS.whales=async(r,soft)=>{
   navTitle('Whales'); const w=await tryGet('whales');
   if(!w){if(!soft)$('#view').innerHTML=`<h1 class="big">Whales</h1>${sk(64)}${sk(64,2)}${sk(64,2)}`;return;}
   const L=w.whales||[];
-  $('#view').innerHTML=`<h1 class="big">Whales</h1>${L.length?`<div class="list">${L.map(x=>`<div class="li"><span class="sec" style="width:20px">${x.rank??''}</span>${mono(x.handle)}<a class="m" href="#/whale/${encodeURIComponent(x.id)}" aria-label="@${esc(x.handle)}, rank ${x.rank}, details"><div class="t">@${esc(x.handle)}</div><div class="s">${x.last_fill?`${esc(x.last_fill.side==='buy'?'bought':'sold')} ${esc(x.last_fill.symbol||(x.last_fill.mint||'').slice(0,6))} · ${ago(x.last_fill.ts)}`:'no fill seen'}</div></a><span class="v"><span class="${x.pnl_7d>=0?'green':'red'}">${cmp(x.pnl_7d)}</span><small>${x.win_rate!=null?(x.win_rate*100).toFixed(0)+'% win':''}</small></span>${sw(x.muted,`Mute @${x.handle}`)}</div>`).join('')}</div><p class="note">Mute: ${VIA}. Guard still watches a muted whale's exits on coins you hold.</p>`:`<div class="empty">List builds at night start</div>`}`;
+  $('#view').innerHTML=`<h1 class="big">Whales</h1>${L.length?`<div class="list">${L.map(x=>`<div class="li"><span class="sec" style="width:20px">${x.rank??''}</span>${mono(x.handle)}<a class="m" href="#/whale/${encodeURIComponent(x.id)}" aria-label="@${esc(x.handle)}, rank ${x.rank}, details"><div class="t">@${esc(x.handle)}</div><div class="s">${x.last_fill?`${esc(x.last_fill.side==='buy'?'bought':'sold')} ${esc(x.last_fill.symbol||(x.last_fill.mint||'').slice(0,6))} · ${ago(x.last_fill.ts)}`:'no fill seen'}</div></a><span class="v"><span class="${x.pnl_7d>=0?'green':'red'}">${cmp(x.pnl_7d)}</span><small>${x.win_rate!=null?(x.win_rate*100).toFixed(0)+'% win':''}</small></span>${sw(x.muted,`Mute @${x.handle}`)}</div>`).join('')}</div><p class="note">Mute: ${viaH()}. Guard still watches a muted whale's exits on coins you hold.</p>`:`<div class="empty">List builds at night start</div>`}`;
 };
 VIEWS.whale=async(r,soft)=>{
   const w=await tryGet('whale/'+r.a); navTitle(w?'@'+w.handle:'Whale',true);
@@ -269,7 +271,7 @@ VIEWS.bots=async(r,soft)=>{
     const rows=b.name==='executor'&&(od?.rows||[]).length?od.rows.slice(0,20).map(o=>`<button class="li" onclick="openOrder(${o.id})"><span class="m"><div class="t">${o.side==='buy'?'Buy':'Sell'} ${esc(o.symbol||(o.mint||'').slice(0,6))} · ${esc(o.status)}</div><div class="s">${hm(o.ts)}${o.error?' · '+esc(o.error):''}</div></span><span class="v">${usd(o.usd)}</span></button>`).join(''):d.map(x=>`<div class="li"><a class="m" ${x.mint?`href="#/${x.decision==='rejected'?'audit':'coin'}/${x.mint}"`:''}><div class="t">${esc(x.symbol||(x.mint||'').slice(0,6)||'coin')} · ${esc(x.decision)}</div><div class="s">${esc(x.detail||'')} · ${typeof x.ts==='string'&&x.ts.endsWith('ET')?esc(x.ts.slice(11,16)):hm(x.ts)}</div></a>${fomoBtn(x.link)}</div>`).join('');
     return `<section class="grp" style="margin-bottom:14px" aria-label="${NAMES[b.name]}"><div class="li"><span class="sw" style="width:12px;height:12px;border-radius:50%;background:${ok?'#00d35a':b.paused?'#ff9f0a':'#ff453a'}" aria-hidden="true"></span><div class="m"><div class="t" style="color:${COLORS[b.name]};font-weight:700">${NAMES[b.name]}</div><div class="s">${ok?'running':esc(b.status)} · heartbeat ${b.heartbeat_s!=null?Math.round(b.heartbeat_s)+'s':'—'} · ${b.today_count??'—'} today</div></div>${sw(!b.paused,`Run ${NAMES[b.name]}`,lock||VIA)}</div>
     ${rows?`<div style="max-height:320px;overflow:auto">${rows}</div>`:`<div class="li"><span class="sec">No decisions yet</span></div>`}
-    <div class="li"><a class="m blue" href="#/account/${b.name}" style="min-height:44px;display:flex;align-items:center">Settings ›</a><span class="via">${lock?esc(lock):'pause '+VIA}</span></div></section>`;}).join('');
+    <div class="li"><a class="m blue" href="#/account/${b.name}" style="min-height:44px;display:flex;align-items:center">Settings ›</a><span class="via">${lock?esc(lock):'pause '+viaH()}</span></div></section>`;}).join('');
 };
 // ---------- COIN ----------
 VIEWS.coin=async(r,soft)=>{
@@ -293,7 +295,7 @@ VIEWS.coin=async(r,soft)=>{
 function sellSheet(c){
   let pct=null;
   sheet(`<div class="seg" role="group" aria-label="How much to sell">${[25,50,100].map(x=>`<button data-p="${x}" aria-pressed="false">${x}%</button>`).join('')}</div>
-  <button class="btn redb" id="confirmSell" style="width:100%;margin-top:16px" disabled>Confirm sell</button><p class="note">Confirm sell = POST /api/sell, then Executor clicks it. Plan B has no way to reach the box from this page: sell ${VIA}.</p>`,`Sell ${c.symbol||''}`);
+  <button class="btn redb" id="confirmSell" style="width:100%;margin-top:16px" disabled>Confirm sell</button><p class="note">Confirm sell = POST /api/sell, then Executor clicks it. Plan B has no way to reach the box from this page: sell ${viaH()} (send: sell ${esc(c.symbol||'')}).</p>`,`Sell ${c.symbol||''}`);
   $$('#sheetBody .seg button').forEach(b=>b.onclick=()=>{pct=+b.dataset.p;$$('#sheetBody .seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));$('#confirmSell').textContent=`Confirm sell ${pct}% · ${VIA}`;});
 }
 // ---------- AUDIT ----------
@@ -335,14 +337,14 @@ VIEWS.account=async(r,soft)=>{
   $('#view').innerHTML=`<h1 class="big">Account</h1>
   <div class="grp"><div class="li"><div class="m"><div class="t">Mode</div><div class="s">LIVE needs 1 full PAPER night (${gate.full_paper_nights??0} so far), STEP 15 passed (${gate.step15_passed?'yes':'not yet'}) and you typing LIVE</div></div></div>
    <div style="padding:0 14px 12px"><div class="seg" role="group" aria-label="Mode">${['PAPER','LIVE'].map(m=>`<button disabled aria-pressed="${mode===m}" aria-label="${m}${mode===m?' (current)':''}, ${VIA}">${m}</button>`).join('')}</div>
-   <div class="ctl" style="display:flex;gap:10px;margin-top:10px"><input class="field" style="flex:1" placeholder="Type LIVE" disabled aria-label="Type LIVE to switch, ${VIA}"><span class="via" style="align-self:center">${mode==='PAPER'||mode==='LIVE'?'':'desk is '+esc(mode)+' · '}${VIA}</span></div></div></div>
+   <div class="ctl" style="display:flex;gap:10px;margin-top:10px"><input class="field" style="flex:1" placeholder="Type LIVE" disabled aria-label="Type LIVE to switch, ${VIA}"><span class="via" style="align-self:center">${mode==='PAPER'||mode==='LIVE'?'':'desk is '+esc(mode)+' · '}${viaH()}</span></div></div></div>
   <div class="grp"><div class="li"><div class="m"><div class="t">Cash</div><div class="s">PAPER start ${usd(acc.paper_start_cash)} · free ${usd(acc.cash_free_usd)}</div></div><input class="field" value="${acc.paper_start_cash??''}" disabled aria-label="PAPER start cash, ${VIA}"></div>
    <div class="li">${safeUrl(acc.profile_url)?`<a class="m" href="${esc(acc.profile_url)}" target="_blank" rel="noopener"><div class="t">Your FOMO profile ↗</div><div class="s">@${esc(acc.fomo_handle)}</div></a>`:'<div class="m"><div class="t">Your FOMO profile</div><div class="s">handle not set</div></div>'}</div>
    <div class="li"><button class="m" id="invite" style="text-align:left;min-height:44px"><div class="t blue">Invite a friend</div><div class="s">FOMO signup link · share sheet</div></button></div></div>
-  <h2>Settings</h2><p class="note">Values the desk sent. Save: ${VIA}. Out of range turns red and Save stays off.</p>
+  <h2>Settings</h2><p class="note">Values the desk sent. Save: ${viaH()} (send: set stop to -20%). Out of range turns red and Save stays off.</p>
   ${groups.map(([g,items])=>`<section class="grp" id="g_${esc(g)}" aria-label="${esc(NAMES[g]||g)} settings"><div class="li"><div class="m"><div class="t" style="color:${COLORS[g]||'#fff'};font-weight:700">${esc(NAMES[g]||g[0].toUpperCase()+g.slice(1))}</div></div><button class="btn sec2" disabled style="min-height:44px" aria-label="Save ${esc(g)} settings, ${VIA}">Save</button></div>${items.map(setRow).join('')}</section>`).join('')}
-  <h2>Copy picks</h2><div class="grp"><div style="padding:12px 14px"><div class="seg" role="group" aria-label="Copy picks schedule">${['off','24h','12h','6h'].map(x=>`<button disabled aria-pressed="${x==='off'}">${x}</button>`).join('')}</div><p class="note">The chapter 3 prompt is not built yet. ${VIA}.</p></div></div>
-  <h2>Pushes</h2><div class="grp"><div class="li"><div class="m"><div class="t">Telegram</div><div class="s">not connected (STEP 11)</div></div><span class="tpill">not connected</span></div>
+  <h2>Copy picks</h2><div class="grp"><div style="padding:12px 14px"><div class="seg" role="group" aria-label="Copy picks schedule">${['off','24h','12h','6h'].map(x=>`<button disabled aria-pressed="${x==='off'}">${x}</button>`).join('')}</div><p class="note">The chapter 3 prompt is not built yet.</p></div></div>
+  <h2>Pushes</h2><div class="grp">${(()=>{const t=tg()||acc.telegram;const ok=!!(t&&t.connected);return `<div class="li"><div class="m"><div class="t">Pushes: Telegram ${ok?'connected':'not connected'}</div><div class="s">${ok?`@${esc(t.bot_username)} · ${viaH()}`:esc((t&&t.state)||'the desk has not reported Telegram yet')}</div></div><span class="tpill">${ok?'connected':'off'}</span></div>`;})()}
    <div class="li"><div class="m"><div class="t">Web push</div><div class="s">Plan B: Telegram only. Pages has no server to take the subscription (POST /api/push).</div></div><span class="tpill">off</span></div>
    <div class="li" style="gap:10px">${dis('Enable notifications')}${dis('Send test push')}</div></div>
   <h2>More</h2><div class="grp"><div class="li"><div class="m"><div class="t">Watch in Grok Bot</div><div class="s">Your own computer preview opens in the Grok Bot app, not from this page</div></div></div>
@@ -369,7 +371,7 @@ $('#btnSearch').onclick=()=>{
     const isMint=/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v)&&!coins.some(c=>c.mint===v);
     $('#sres').innerHTML=(coins.length?`<h2>Coins</h2><div class="list">${coins.map(c=>`<a class="li" href="#/${(c.status||'').startsWith('rejected')?'audit':'coin'}/${c.mint}" data-q="${esc(v)}">${mono(c.symbol)}<span class="m"><div class="t">${esc(c.name||'')} · ${esc(c.symbol||'')}</div><div class="s">${esc(c.status||'seen')}</div></span></a>`).join('')}</div>`:'')
       +(whales.length?`<h2>Whales</h2><div class="list">${whales.map(w=>`<a class="li" href="#/whale/${encodeURIComponent(w.id)}" data-q="${esc(v)}">${mono(w.handle)}<span class="m"><div class="t">@${esc(w.handle)}</div><div class="s">rank ${w.rank??'—'}</div></span></a>`).join('')}</div>`:'')
-      +(isMint?`<div class="empty" style="margin-top:12px">The desk has never seen this mint.<br><button class="btn sec2" disabled style="margin:12px auto 0" aria-label="Audit it now, ${VIA}">Audit it now</button><div class="via" style="margin-top:6px">= the "buy X" command · ${VIA}</div></div>`:'')
+      +(isMint?`<div class="empty" style="margin-top:12px">The desk has never seen this mint.<br><button class="btn sec2" disabled style="margin:12px auto 0" aria-label="Audit it now, ${VIA}">Audit it now</button><div class="via" style="margin-top:6px">= the "buy X" command · ${viaH()}</div></div>`:'')
       +(!coins.length&&!whales.length&&!isMint?'<div class="empty" style="margin-top:12px">No match</div>':'');
     $$('#sres a[data-q]').forEach(a=>a.addEventListener('click',()=>addRecent(a.dataset.q)));};
   q.oninput=()=>{clearTimeout(sT);sT=setTimeout(show,250);}; q.onkeydown=e=>{if(e.key==='Enter')addRecent(q.value);}; show();
