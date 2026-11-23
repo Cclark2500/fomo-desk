@@ -9,6 +9,9 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const VIA='via Telegram';
 const tg=()=>(typeof LAST!=='undefined'&&LAST.state&&LAST.state.push&&LAST.state.push.telegram)||null;
 const viaH=()=>{const t=tg();return t&&t.deep_link?`<a class="blue tlink" href="${esc(t.deep_link)}" target="_blank" rel="noopener">via Telegram</a>`:'via Telegram (not connected yet)';};
+// STEP 13 mine vs theirs: the same ticket exited when the lead whale exited
+const sgn2=v=>(v>=0?'+':'-')+'$'+Math.abs(v).toFixed(2);
+const wline=w=>!w?'':`<div class="li"><div class="m"><div class="t">Mine vs the whale's exit</div><div class="s" style="white-space:normal">${w.exited?`mine ${w.mine_pnl_usd!=null?sgn2(w.mine_pnl_usd)+(w.mine_pct!=null?` (${w.mine_pct>0?'+':''}${w.mine_pct}%)`:''):'open'} · theirs ${sgn2(w.theirs_pnl_usd)} (${w.theirs_pct>0?'+':''}${w.theirs_pct}%) · whale sold ${hm(w.exit_ts)}`:'the whale has not sold yet'}</div></div></div>`;
 const COLORS={watcher:'#64d2ff',vetter:'#ffd60a',sizer:'#bf5af2',executor:'#00d35a',guard:'#ff6b9a'};
 const NAMES={watcher:'Watcher',vetter:'Vetter',sizer:'Sizer',executor:'Executor',guard:'Guard'};
 function dataPath(){
@@ -286,7 +289,7 @@ VIEWS.coin=async(r,soft)=>{
   ${(c.candles||[]).length?'':'<p class="note">No price reads stored for this coin in the last 24h.</p>'}
   <div class="stats"><div class="stat"><div class="k">Market cap</div><div class="v">—</div></div><div class="stat"><div class="k">Liquidity</div><div class="v">—</div></div><div class="stat"><div class="k">Holders</div><div class="v">${c.holders!=null?Number(c.holders).toLocaleString():'—'}</div></div></div>
   <p class="note">Market cap and liquidity are not stored by the desk yet, so they show —.</p>
-  ${p?`<div class="list"><div class="li"><div class="m"><div class="t">Your position · ${usd(p.size_usd)} in · Executor</div><div class="s">${p.mode} · opened ${hm(p.opened_at)}${p.stop_price?' · stop '+price(p.stop_price):''}</div></div></div></div>`:'<p class="note">No position in this coin.</p>'}
+  ${p?`<div class="list"><div class="li"><div class="m"><div class="t">Your position · ${usd(p.size_usd)} in · Executor</div><div class="s">${p.mode} · opened ${hm(p.opened_at)}${p.stop_price?' · stop '+price(p.stop_price):''}</div></div></div>${wline(p.whale_line)}</div>`:'<p class="note">No position in this coin.</p>'}
   <div class="btns">${safeUrl(c.link)?`<a class="btn pri" href="${esc(c.link)}" target="_blank" rel="noopener">Open on FOMO</a>`:'<span></span>'}<button class="btn redb" id="sellNow" ${p&&!p.closed_at?'':'disabled'} aria-label="Sell now">Sell now</button></div>
   ${(c.whales||[]).length?`<h2>Whales in</h2><div class="list">${c.whales.map(w=>`<div class="li"><a class="m" href="#/whale/${encodeURIComponent(w.id)}"><div class="t">@${esc(w.handle)}</div><div class="s">first buy ${hm(w.first_buy_ts)}${w.sold_seen?' · sold':''}</div></a><span class="v">${usd(w.usd)}</span></div>`).join('')}</div>`:''}`;
   drawCandles($('#cc'),c.candles||[],p?.stop_price,(c.whales||[]).map(w=>({t:w.first_buy_ts})));
