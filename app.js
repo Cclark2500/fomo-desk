@@ -8,7 +8,7 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const VIA='via Telegram';
 const tg=()=>(typeof LAST!=='undefined'&&LAST.state&&LAST.state.push&&LAST.state.push.telegram)||null;
-const viaH=()=>{const t=tg();return t&&t.deep_link?`<a class="blue" href="${esc(t.deep_link)}" target="_blank" rel="noopener">via Telegram</a>`:'via Telegram (not connected yet)';};
+const viaH=()=>{const t=tg();return t&&t.deep_link?`<a class="blue tlink" href="${esc(t.deep_link)}" target="_blank" rel="noopener">via Telegram</a>`:'via Telegram (not connected yet)';};
 const COLORS={watcher:'#64d2ff',vetter:'#ffd60a',sizer:'#bf5af2',executor:'#00d35a',guard:'#ff6b9a'};
 const NAMES={watcher:'Watcher',vetter:'Vetter',sizer:'Sizer',executor:'Executor',guard:'Guard'};
 function dataPath(){
@@ -344,7 +344,7 @@ VIEWS.account=async(r,soft)=>{
   <h2>Settings</h2><p class="note">Values the desk sent. Save: ${viaH()} (send: set stop to -20%). Out of range turns red and Save stays off.</p>
   ${groups.map(([g,items])=>`<section class="grp" id="g_${esc(g)}" aria-label="${esc(NAMES[g]||g)} settings"><div class="li"><div class="m"><div class="t" style="color:${COLORS[g]||'#fff'};font-weight:700">${esc(NAMES[g]||g[0].toUpperCase()+g.slice(1))}</div></div><button class="btn sec2" disabled style="min-height:44px" aria-label="Save ${esc(g)} settings, ${VIA}">Save</button></div>${items.map(setRow).join('')}</section>`).join('')}
   <h2>Copy picks</h2><div class="grp"><div style="padding:12px 14px"><div class="seg" role="group" aria-label="Copy picks schedule">${['off','24h','12h','6h'].map(x=>`<button disabled aria-pressed="${x==='off'}">${x}</button>`).join('')}</div><p class="note">The chapter 3 prompt is not built yet.</p></div></div>
-  <h2>Pushes</h2><div class="grp">${(()=>{const t=tg()||acc.telegram;const ok=!!(t&&t.connected);return `<div class="li"><div class="m"><div class="t">Pushes: Telegram ${ok?'connected':'not connected'}</div><div class="s">${ok?`@${esc(t.bot_username)} · ${viaH()}`:esc((t&&t.state)||'the desk has not reported Telegram yet')}</div></div><span class="tpill">${ok?'connected':'off'}</span></div>`;})()}
+  <h2>Pushes</h2><div class="grp">${(()=>{const t=tg()||acc.telegram;const ok=!!(t&&t.connected);return `<div class="li"><div class="m"><div class="t">Pushes: Telegram ${ok?'connected':'not connected'}</div><div class="s" style="white-space:normal">${ok?`@${esc(t.bot_username)} · ${viaH()}`:esc((t&&t.state)||'the desk has not reported Telegram yet')}</div></div><span class="tpill">${ok?'connected':'off'}</span></div>`;})()}
    <div class="li"><div class="m"><div class="t">Web push</div><div class="s">Plan B: Telegram only. Pages has no server to take the subscription (POST /api/push).</div></div><span class="tpill">off</span></div>
    <div class="li" style="gap:10px">${dis('Enable notifications')}${dis('Send test push')}</div></div>
   <h2>More</h2><div class="grp"><div class="li"><div class="m"><div class="t">Watch in Grok Bot</div><div class="s">Your own computer preview opens in the Grok Bot app, not from this page</div></div></div>

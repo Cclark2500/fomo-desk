@@ -184,3 +184,6 @@ h2 a,h2 button{font:400 15px var(--txt);color:var(--blue);min-height:44px;displa
   *,*::before,*::after{animation:none!important;transition:none!important}
   .beam .c>b{opacity:1}
 }
+
+/* STEP 11: inline "via Telegram" link, 44px tap area without changing the line */
+.tlink{display:inline-block;padding:15px 6px;margin:-15px -6px;text-decoration:underline}
